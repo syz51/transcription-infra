@@ -1,0 +1,173 @@
+name: "Terraform Infrastructure"
+
+on:
+  # push:
+  #   branches: ["main"]
+  # pull_request:
+  #   branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || 'dev' }}
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install the latest version of Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.12.2"
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'eu-west-2' }}
+
+      # Set environment variable for current deployment
+      - name: Set environment variables
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || 'dev' }}"
+          echo "ENVIRONMENT=${ENVIRONMENT}" >> $GITHUB_ENV
+          echo "Deploying to environment: ${ENVIRONMENT}"
+
+      # Create backend configuration
+      - name: Create backend configuration
+        run: |
+          cat > backend.hcl << EOF
+          bucket = "${{ vars.TERRAFORM_STATE_BUCKET }}"
+          key = "${ENVIRONMENT}/terraform.tfstate"
+          region = "${{ vars.AWS_REGION || 'eu-west-2' }}"
+          encrypt = true
+          dynamodb_table = "${{ vars.TERRAFORM_LOCK_TABLE || 'terraform-locks' }}"
+          EOF
+
+      # Download and prepare FFmpeg layer (if not using pre-built layers)
+      - name: Prepare FFmpeg Layer
+        run: |
+          mkdir -p lambda-layers/ffmpeg/bin
+
+          # Download FFmpeg static binaries
+          wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+          tar -xf ffmpeg-release-amd64-static.tar.xz
+
+          # Copy binaries to layer directory
+          cp ffmpeg-*-amd64-static/ffmpeg lambda-layers/ffmpeg/bin/
+          cp ffmpeg-*-amd64-static/ffprobe lambda-layers/ffmpeg/bin/
+
+          # Verify binaries
+          chmod +x lambda-layers/ffmpeg/bin/*
+          ls -la lambda-layers/ffmpeg/bin/
+
+      # Initialize a new or existing Terraform working directory
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl
+
+      # Checks that all Terraform configuration files adhere to a canonical format
+      - name: Terraform Format
+        run: terraform fmt -check
+
+      # Validates the configuration files
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Generates an execution plan for Terraform
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -var-file=environments/${ENVIRONMENT}.tfvars -no-color -out=tfplan
+          terraform show -no-color tfplan > plan.txt
+        continue-on-error: true
+
+      # Add PR comment with plan results
+      - name: Update Pull Request
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('plan.txt', 'utf8');
+            const maxGitHubBodyCharacters = 65536;
+
+            function chunkSubstr(str, size) {
+              const numChunks = Math.ceil(str.length / size)
+              const chunks = new Array(numChunks)
+              for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+                chunks[i] = str.substr(o, size)
+              }
+              return chunks
+            }
+
+            // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
+            var plans = chunkSubstr(plan, maxGitHubBodyCharacters); 
+
+            for (let i = 0; i < plans.length; i++) {
+              const output = `### ${{ github.workflow }} Plan Part # ${i + 1}
+              
+              #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+              #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+              #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+              
+              <details><summary>Show Plan</summary>
+              
+              \`\`\`\n
+              ${plans[i]}
+              \`\`\`
+              
+              </details>
+              
+              *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+
+      # Apply Terraform configuration on main branch or manual dispatch
+      - name: Terraform Apply
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+        run: terraform apply -auto-approve tfplan
+
+      # Upload plan artifact
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraform-plan-${{ env.ENVIRONMENT }}
+          path: |
+            tfplan
+            plan.txt
+          retention-days: 30

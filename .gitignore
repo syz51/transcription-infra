@@ -1,0 +1,82 @@
+# Terraform
+!environments/dev.tfvars
+!environments/prod.tfvars
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+backend.hcl
+plan.txt
+tfplan
+plan.json
+
+# Lambda artifacts
+lambda-deployment-package.zip
+ffmpeg-layer.zip
+*.zip
+
+# FFmpeg binaries (these will be downloaded in CI)
+lambda-layers/ffmpeg/bin/ffmpeg
+lambda-layers/ffmpeg/bin/ffprobe
+lambda-layers/ffmpeg/bin/qt-faststart
+ffmpeg-*-amd64-static/
+ffmpeg-*-amd64-static.tar.xz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# AWS
+.aws/
+
+# Backup files
+*.bak
+*.backup 
