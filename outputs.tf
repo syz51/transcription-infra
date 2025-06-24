@@ -59,29 +59,29 @@ output "lambda_execution_role_arn" {
 }
 
 # CloudWatch Outputs
-# output "cloudwatch_dashboard_url" {
-#   description = "URL of the CloudWatch dashboard"
-#   value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.audio_extraction_dashboard.dashboard_name}"
-# }
+output "cloudwatch_dashboard_url" {
+  description = "URL of the CloudWatch dashboard"
+  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.audio_extraction_dashboard.dashboard_name}"
+}
 
 # output "lambda_log_group_name" {
 #   description = "Name of the Lambda CloudWatch log group"
 #   value       = aws_cloudwatch_log_group.metadata_extractor.name
 # }
 
-# output "sns_alerts_topic_arn" {
-#   description = "ARN of the SNS topic for alerts (if enabled)"
-#   value       = var.enable_sns_notifications ? aws_sns_topic.alerts[0].arn : null
-# }
+output "sns_alerts_topic_arn" {
+  description = "ARN of the SNS topic for alerts (if enabled)"
+  value       = var.enable_sns_notifications ? aws_sns_topic.alerts[0].arn : null
+}
 
-# output "cloudwatch_alarms" {
-#   description = "Map of CloudWatch alarm names and ARNs"
-#   value = {
-#     lambda_errors      = aws_cloudwatch_metric_alarm.lambda_error_rate.arn
-#     lambda_duration    = aws_cloudwatch_metric_alarm.lambda_duration.arn
-#     sqs_queue_depth    = aws_cloudwatch_metric_alarm.sqs_queue_depth.arn
-#     dlq_messages       = aws_cloudwatch_metric_alarm.dlq_messages.arn
-#     dynamodb_throttles = aws_cloudwatch_metric_alarm.dynamodb_throttles.arn
-#     s3_4xx_errors      = aws_cloudwatch_metric_alarm.s3_4xx_errors.arn
-#   }
-# }
+output "cloudwatch_alarms" {
+  description = "Map of CloudWatch alarm names and ARNs"
+  value = {
+    # lambda_errors      = aws_cloudwatch_metric_alarm.lambda_error_rate.arn
+    # lambda_duration    = aws_cloudwatch_metric_alarm.lambda_duration.arn
+    sqs_queue_depth    = aws_cloudwatch_metric_alarm.sqs_queue_depth.arn
+    dlq_messages       = aws_cloudwatch_metric_alarm.dlq_messages.arn
+    dynamodb_throttles = aws_cloudwatch_metric_alarm.dynamodb_throttles.arn
+    s3_4xx_errors      = aws_cloudwatch_metric_alarm.s3_4xx_errors.arn
+  }
+}

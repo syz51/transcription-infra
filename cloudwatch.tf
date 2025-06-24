@@ -1,8 +1,8 @@
-# # ========================================
-# # CloudWatch Log Groups for Comprehensive Logging
-# # ========================================
+# ========================================
+# CloudWatch Log Groups for Comprehensive Logging
+# ========================================
 
-# # Additional log groups for S3 access logging (if needed via CloudTrail)
+# Additional log groups for S3 access logging (if needed via CloudTrail)
 # resource "aws_cloudwatch_log_group" "s3_access_logs" {
 #   name              = "/aws/s3/${local.project_name}-access-logs-${var.environment}"
 #   retention_in_days = var.cloudwatch_log_retention_days
@@ -46,9 +46,9 @@
 #   })
 # }
 
-# # ========================================
-# # CloudWatch Log Metric Filters
-# # ========================================
+# ========================================
+# CloudWatch Log Metric Filters
+# ========================================
 
 # # Lambda Error Tracking
 # resource "aws_cloudwatch_log_metric_filter" "lambda_errors" {
@@ -160,9 +160,9 @@
 #   }
 # }
 
-# # ========================================
-# # CloudWatch Metric Alarms
-# # ========================================
+# ========================================
+# CloudWatch Metric Alarms
+# ========================================
 
 # # Lambda Error Rate Alarm
 # resource "aws_cloudwatch_metric_alarm" "lambda_error_rate" {
@@ -212,285 +212,285 @@
 #   })
 # }
 
-# # SQS Queue Depth Alarm
-# resource "aws_cloudwatch_metric_alarm" "sqs_queue_depth" {
-#   alarm_name          = "${local.project_name}-sqs-queue-depth-${var.environment}"
-#   comparison_operator = "GreaterThanThreshold"
-#   evaluation_periods  = 2
-#   metric_name         = "ApproximateNumberOfVisibleMessages"
-#   namespace           = "AWS/SQS"
-#   period              = 300
-#   statistic           = "Average"
-#   threshold           = var.sqs_queue_depth_threshold
-#   alarm_description   = "This metric monitors SQS queue depth"
+# SQS Queue Depth Alarm
+resource "aws_cloudwatch_metric_alarm" "sqs_queue_depth" {
+  alarm_name          = "${local.project_name}-sqs-queue-depth-${var.environment}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "ApproximateNumberOfVisibleMessages"
+  namespace           = "AWS/SQS"
+  period              = 300
+  statistic           = "Average"
+  threshold           = var.sqs_queue_depth_threshold
+  alarm_description   = "This metric monitors SQS queue depth"
 
-#   dimensions = {
-#     QueueName = aws_sqs_queue.video_processing.name
-#   }
+  dimensions = {
+    QueueName = aws_sqs_queue.video_processing.name
+  }
 
-#   alarm_actions = var.enable_sns_notifications ? [aws_sns_topic.alerts[0].arn] : []
+  alarm_actions = var.enable_sns_notifications ? [aws_sns_topic.alerts[0].arn] : []
 
-#   tags = merge(local.common_tags, {
-#     Name = "SQS Queue Depth Alarm"
-#     Type = "cloudwatch-alarm"
-#   })
-# }
+  tags = merge(local.common_tags, {
+    Name = "SQS Queue Depth Alarm"
+    Type = "cloudwatch-alarm"
+  })
+}
 
-# # DLQ Messages Alarm
-# resource "aws_cloudwatch_metric_alarm" "dlq_messages" {
-#   alarm_name          = "${local.project_name}-dlq-messages-${var.environment}"
-#   comparison_operator = "GreaterThanThreshold"
-#   evaluation_periods  = 1
-#   metric_name         = "ApproximateNumberOfVisibleMessages"
-#   namespace           = "AWS/SQS"
-#   period              = 300
-#   statistic           = "Sum"
-#   threshold           = 0
-#   alarm_description   = "This metric monitors dead letter queue for failed messages"
+# DLQ Messages Alarm
+resource "aws_cloudwatch_metric_alarm" "dlq_messages" {
+  alarm_name          = "${local.project_name}-dlq-messages-${var.environment}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ApproximateNumberOfVisibleMessages"
+  namespace           = "AWS/SQS"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 0
+  alarm_description   = "This metric monitors dead letter queue for failed messages"
 
-#   dimensions = {
-#     QueueName = aws_sqs_queue.video_processing_dlq.name
-#   }
+  dimensions = {
+    QueueName = aws_sqs_queue.video_processing_dlq.name
+  }
 
-#   alarm_actions = var.enable_sns_notifications ? [aws_sns_topic.alerts[0].arn] : []
+  alarm_actions = var.enable_sns_notifications ? [aws_sns_topic.alerts[0].arn] : []
 
-#   tags = merge(local.common_tags, {
-#     Name = "DLQ Messages Alarm"
-#     Type = "cloudwatch-alarm"
-#   })
-# }
+  tags = merge(local.common_tags, {
+    Name = "DLQ Messages Alarm"
+    Type = "cloudwatch-alarm"
+  })
+}
 
-# # DynamoDB Throttling Alarm
-# resource "aws_cloudwatch_metric_alarm" "dynamodb_throttles" {
-#   alarm_name          = "${local.project_name}-dynamodb-throttles-${var.environment}"
-#   comparison_operator = "GreaterThanThreshold"
-#   evaluation_periods  = 2
-#   metric_name         = "UserErrors"
-#   namespace           = "AWS/DynamoDB"
-#   period              = 300
-#   statistic           = "Sum"
-#   threshold           = 0
-#   alarm_description   = "This metric monitors DynamoDB throttling events"
+# DynamoDB Throttling Alarm
+resource "aws_cloudwatch_metric_alarm" "dynamodb_throttles" {
+  alarm_name          = "${local.project_name}-dynamodb-throttles-${var.environment}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "UserErrors"
+  namespace           = "AWS/DynamoDB"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 0
+  alarm_description   = "This metric monitors DynamoDB throttling events"
 
-#   dimensions = {
-#     TableName = aws_dynamodb_table.extraction_state.name
-#   }
+  dimensions = {
+    TableName = aws_dynamodb_table.extraction_state.name
+  }
 
-#   alarm_actions = var.enable_sns_notifications ? [aws_sns_topic.alerts[0].arn] : []
+  alarm_actions = var.enable_sns_notifications ? [aws_sns_topic.alerts[0].arn] : []
 
-#   tags = merge(local.common_tags, {
-#     Name = "DynamoDB Throttles Alarm"
-#     Type = "cloudwatch-alarm"
-#   })
-# }
+  tags = merge(local.common_tags, {
+    Name = "DynamoDB Throttles Alarm"
+    Type = "cloudwatch-alarm"
+  })
+}
 
-# # S3 4XX Error Alarm
-# resource "aws_cloudwatch_metric_alarm" "s3_4xx_errors" {
-#   alarm_name          = "${local.project_name}-s3-4xx-errors-${var.environment}"
-#   comparison_operator = "GreaterThanThreshold"
-#   evaluation_periods  = 2
-#   metric_name         = "4xxErrors"
-#   namespace           = "AWS/S3"
-#   period              = 300
-#   statistic           = "Sum"
-#   threshold           = var.s3_error_threshold
-#   alarm_description   = "This metric monitors S3 4xx errors"
+# S3 4XX Error Alarm
+resource "aws_cloudwatch_metric_alarm" "s3_4xx_errors" {
+  alarm_name          = "${local.project_name}-s3-4xx-errors-${var.environment}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "4xxErrors"
+  namespace           = "AWS/S3"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = var.s3_error_threshold
+  alarm_description   = "This metric monitors S3 4xx errors"
 
-#   dimensions = {
-#     BucketName = aws_s3_bucket.video_input.bucket
-#   }
+  dimensions = {
+    BucketName = aws_s3_bucket.video_input.bucket
+  }
 
-#   alarm_actions = var.enable_sns_notifications ? [aws_sns_topic.alerts[0].arn] : []
+  alarm_actions = var.enable_sns_notifications ? [aws_sns_topic.alerts[0].arn] : []
 
-#   tags = merge(local.common_tags, {
-#     Name = "S3 4XX Errors Alarm"
-#     Type = "cloudwatch-alarm"
-#   })
-# }
+  tags = merge(local.common_tags, {
+    Name = "S3 4XX Errors Alarm"
+    Type = "cloudwatch-alarm"
+  })
+}
 
-# # ========================================
-# # SNS Topic for Alerts (Optional)
-# # ========================================
+# ========================================
+# SNS Topic for Alerts (Optional)
+# ========================================
 
-# resource "aws_sns_topic" "alerts" {
-#   count = var.enable_sns_notifications ? 1 : 0
-#   name  = "${local.project_name}-alerts-${var.environment}"
+resource "aws_sns_topic" "alerts" {
+  count = var.enable_sns_notifications ? 1 : 0
+  name  = "${local.project_name}-alerts-${var.environment}"
 
-#   tags = merge(local.common_tags, {
-#     Name = "Alert Notifications"
-#     Type = "sns-topic"
-#   })
-# }
+  tags = merge(local.common_tags, {
+    Name = "Alert Notifications"
+    Type = "sns-topic"
+  })
+}
 
-# resource "aws_sns_topic_subscription" "email_alerts" {
-#   count     = var.enable_sns_notifications && var.alert_email != "" ? 1 : 0
-#   topic_arn = aws_sns_topic.alerts[0].arn
-#   protocol  = "email"
-#   endpoint  = var.alert_email
-# }
+resource "aws_sns_topic_subscription" "email_alerts" {
+  count     = var.enable_sns_notifications && var.alert_email != "" ? 1 : 0
+  topic_arn = aws_sns_topic.alerts[0].arn
+  protocol  = "email"
+  endpoint  = var.alert_email
+}
 
-# # ========================================
-# # CloudWatch Dashboard
-# # ========================================
+# ========================================
+# CloudWatch Dashboard
+# ========================================
 
-# resource "aws_cloudwatch_dashboard" "audio_extraction_dashboard" {
-#   dashboard_name = "${local.project_name}-dashboard-${var.environment}"
+resource "aws_cloudwatch_dashboard" "audio_extraction_dashboard" {
+  dashboard_name = "${local.project_name}-dashboard-${var.environment}"
 
-#   dashboard_body = jsonencode({
-#     widgets = [
-#       {
-#         type   = "metric"
-#         x      = 0
-#         y      = 0
-#         width  = 12
-#         height = 6
+  dashboard_body = jsonencode({
+    widgets = [
+      #   {
+      #     type   = "metric"
+      #     x      = 0
+      #     y      = 0
+      #     width  = 12
+      #     height = 6
 
-#         properties = {
-#           metrics = [
-#             ["AWS/Lambda", "Duration", "FunctionName", aws_lambda_function.metadata_extractor_with_layer.function_name],
-#             [".", "Errors", ".", "."],
-#             [".", "Invocations", ".", "."]
-#           ]
-#           view    = "timeSeries"
-#           stacked = false
-#           region  = var.aws_region
-#           title   = "Lambda Function Metrics"
-#           period  = 300
-#         }
-#       },
-#       {
-#         type   = "metric"
-#         x      = 12
-#         y      = 0
-#         width  = 12
-#         height = 6
+      #     properties = {
+      #       metrics = [
+      #         ["AWS/Lambda", "Duration", "FunctionName", aws_lambda_function.metadata_extractor_with_layer.function_name],
+      #         [".", "Errors", ".", "."],
+      #         [".", "Invocations", ".", "."]
+      #       ]
+      #       view    = "timeSeries"
+      #       stacked = false
+      #       region  = var.aws_region
+      #       title   = "Lambda Function Metrics"
+      #       period  = 300
+      #     }
+      #   },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 0
+        width  = 12
+        height = 6
 
-#         properties = {
-#           metrics = [
-#             ["AWS/SQS", "ApproximateNumberOfVisibleMessages", "QueueName", aws_sqs_queue.video_processing.name],
-#             [".", "ApproximateNumberOfVisibleMessages", "QueueName", aws_sqs_queue.video_processing_dlq.name]
-#           ]
-#           view    = "timeSeries"
-#           stacked = false
-#           region  = var.aws_region
-#           title   = "SQS Queue Metrics"
-#           period  = 300
-#         }
-#       },
-#       {
-#         type   = "metric"
-#         x      = 0
-#         y      = 6
-#         width  = 12
-#         height = 6
+        properties = {
+          metrics = [
+            ["AWS/SQS", "ApproximateNumberOfVisibleMessages", "QueueName", aws_sqs_queue.video_processing.name],
+            [".", "ApproximateNumberOfVisibleMessages", "QueueName", aws_sqs_queue.video_processing_dlq.name]
+          ]
+          view    = "timeSeries"
+          stacked = false
+          region  = var.aws_region
+          title   = "SQS Queue Metrics"
+          period  = 300
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 12
+        height = 6
 
-#         properties = {
-#           metrics = [
-#             ["AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", aws_dynamodb_table.extraction_state.name],
-#             [".", "ConsumedWriteCapacityUnits", ".", "."]
-#           ]
-#           view    = "timeSeries"
-#           stacked = false
-#           region  = var.aws_region
-#           title   = "DynamoDB Capacity Metrics"
-#           period  = 300
-#         }
-#       },
-#       {
-#         type   = "metric"
-#         x      = 12
-#         y      = 6
-#         width  = 12
-#         height = 6
+        properties = {
+          metrics = [
+            ["AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", aws_dynamodb_table.extraction_state.name],
+            [".", "ConsumedWriteCapacityUnits", ".", "."]
+          ]
+          view    = "timeSeries"
+          stacked = false
+          region  = var.aws_region
+          title   = "DynamoDB Capacity Metrics"
+          period  = 300
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 6
+        width  = 12
+        height = 6
 
-#         properties = {
-#           metrics = [
-#             ["AWS/S3", "BucketSizeBytes", "BucketName", aws_s3_bucket.video_input.bucket, "StorageType", "StandardStorage"],
-#             [".", "NumberOfObjects", ".", ".", ".", "AllStorageTypes"],
-#             [".", "BucketSizeBytes", "BucketName", aws_s3_bucket.audio_output.bucket, "StorageType", "StandardStorage"]
-#           ]
-#           view    = "timeSeries"
-#           stacked = false
-#           region  = var.aws_region
-#           title   = "S3 Storage Metrics"
-#           period  = 86400
-#         }
-#       },
-#       {
-#         type   = "log"
-#         x      = 0
-#         y      = 12
-#         width  = 24
-#         height = 6
+        properties = {
+          metrics = [
+            ["AWS/S3", "BucketSizeBytes", "BucketName", aws_s3_bucket.video_input.bucket, "StorageType", "StandardStorage"],
+            [".", "NumberOfObjects", ".", ".", ".", "AllStorageTypes"],
+            [".", "BucketSizeBytes", "BucketName", aws_s3_bucket.audio_output.bucket, "StorageType", "StandardStorage"]
+          ]
+          view    = "timeSeries"
+          stacked = false
+          region  = var.aws_region
+          title   = "S3 Storage Metrics"
+          period  = 86400
+        }
+      },
+      #   {
+      #     type   = "log"
+      #     x      = 0
+      #     y      = 12
+      #     width  = 24
+      #     height = 6
 
-#         properties = {
-#           query = join("", [
-#             "SOURCE '${aws_cloudwatch_log_group.metadata_extractor.name}'\n",
-#             "| fields @timestamp, @message\n",
-#             "| filter @message like /ERROR/\n",
-#             "| sort @timestamp desc\n",
-#             "| limit 100"
-#           ])
-#           region = var.aws_region
-#           title  = "Recent Lambda Errors"
-#         }
-#       },
-#       {
-#         type   = "metric"
-#         x      = 0
-#         y      = 18
-#         width  = 8
-#         height = 6
+      #     properties = {
+      #       query = join("", [
+      #         "SOURCE '${aws_cloudwatch_log_group.metadata_extractor.name}'\n",
+      #         "| fields @timestamp, @message\n",
+      #         "| filter @message like /ERROR/\n",
+      #         "| sort @timestamp desc\n",
+      #         "| limit 100"
+      #       ])
+      #       region = var.aws_region
+      #       title  = "Recent Lambda Errors"
+      #     }
+      #   },
+      #   {
+      #     type   = "metric"
+      #     x      = 0
+      #     y      = 18
+      #     width  = 8
+      #     height = 6
 
-#         properties = {
-#           metrics = [
-#             ["AudioExtraction/Processing", "ProcessingSuccess", "Environment", var.environment],
-#             [".", "ProcessingFailures", ".", "."]
-#           ]
-#           view   = "singleValue"
-#           region = var.aws_region
-#           title  = "Processing Success Rate"
-#           period = 300
-#           stat   = "Sum"
-#         }
-#       },
-#       {
-#         type   = "metric"
-#         x      = 8
-#         y      = 18
-#         width  = 8
-#         height = 6
+      #     properties = {
+      #       metrics = [
+      #         ["AudioExtraction/Processing", "ProcessingSuccess", "Environment", var.environment],
+      #         [".", "ProcessingFailures", ".", "."]
+      #       ]
+      #       view   = "singleValue"
+      #       region = var.aws_region
+      #       title  = "Processing Success Rate"
+      #       period = 300
+      #       stat   = "Sum"
+      #     }
+      #   },
+      #   {
+      #     type   = "metric"
+      #     x      = 8
+      #     y      = 18
+      #     width  = 8
+      #     height = 6
 
-#         properties = {
-#           metrics = [
-#             ["AudioExtraction/Lambda", "LambdaErrors", "Environment", var.environment]
-#           ]
-#           view   = "singleValue"
-#           region = var.aws_region
-#           title  = "Lambda Error Count"
-#           period = 300
-#           stat   = "Sum"
-#         }
-#       },
-#       {
-#         type   = "metric"
-#         x      = 16
-#         y      = 18
-#         width  = 8
-#         height = 6
+      #     properties = {
+      #       metrics = [
+      #         ["AudioExtraction/Lambda", "LambdaErrors", "Environment", var.environment]
+      #       ]
+      #       view   = "singleValue"
+      #       region = var.aws_region
+      #       title  = "Lambda Error Count"
+      #       period = 300
+      #       stat   = "Sum"
+      #     }
+      #   },
+      #   {
+      #     type   = "metric"
+      #     x      = 16
+      #     y      = 18
+      #     width  = 8
+      #     height = 6
 
-#         properties = {
-#           metrics = [
-#             ["AudioExtraction/Files", "VideoFileProcessed", "Environment", var.environment]
-#           ]
-#           view   = "singleValue"
-#           region = var.aws_region
-#           title  = "Videos Processed"
-#           period = 300
-#           stat   = "Sum"
-#         }
-#       }
-#     ]
-#   })
+      #     properties = {
+      #       metrics = [
+      #         ["AudioExtraction/Files", "VideoFileProcessed", "Environment", var.environment]
+      #       ]
+      #       view   = "singleValue"
+      #       region = var.aws_region
+      #       title  = "Videos Processed"
+      #       period = 300
+      #       stat   = "Sum"
+      #     }
+      #   }
+    ]
+  })
 
-# }
+}
